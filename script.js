@@ -1,80 +1,73 @@
-// // 初期データ
+// // ゲームの基本データ // //
 const initialDeck = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
-let pHand = [...initialDeck];
-let cHand = [...initialDeck];
+let pHand = [];
+let cHand = [];
 let pScore = 0;
 let cScore = 0;
+let pTable = []; // 場に出した2枚
+let cTable = []; // CPUが出した2枚
+let phase = 'WAIT'; // 状態管理
 
-// // ターンの状態管理
-let pTable = []; 
-let cTable = []; 
-let phase = 'SELECT_TWO'; 
-
-// // DOM要素
+// // DOMの取得 // //
 const handEl = document.getElementById('player-hand');
 const guideEl = document.getElementById('guide-text');
 const btnEl = document.getElementById('battle-btn');
 const overlayEl = document.getElementById('result-overlay');
 const resultTextEl = document.getElementById('result-text');
 
-// // 初期化
-function initGame() {
+// // ゲーム開始処理 // //
+function startGame() {
+    document.getElementById('title-screen').classList.add('hidden');
+    document.getElementById('game-container').classList.remove('hidden');
     pScore = 0; cScore = 0;
     pHand = [...initialDeck];
     cHand = [...initialDeck];
-    updateScore();
+    updateScoreDisplay();
     startNewTurn();
 }
 
+// // ターン開始の準備 // //
 function startNewTurn() {
     pTable = []; cTable = [];
     
-    // 全てのスロットを一旦まっさらにする
+    // // スロットの掃除
     for(let i=0; i<2; i++) {
-        clearSlot(`player-slot-${i}`);
-        clearSlot(`cpu-slot-${i}`);
+        resetSlot(`player-slot-${i}`);
+        resetSlot(`cpu-slot-${i}`);
     }
 
-    // 【修正】手札が1枚だけ残っている場合（最終決戦）
+    // // 最後の1枚だけ残った場合の特殊処理
     if (pHand.length === 1) {
         phase = 'FINAL_CHOICE';
         pTable = [pHand[0]];
         cTable = [cHand[0]];
+        btnEl.classList.add('hidden');
         
-        btnEl.classList.add('hidden'); // ボタンは不要
-        
-        // 中央のスロット（index 0）に1枚ずつ配置
+        // 自動で場にセット
         document.getElementById('player-slot-0').appendChild(createCardDOM(pTable[0]));
         document.getElementById('cpu-slot-0').appendChild(createCardDOM(cTable[0]));
         
-        // 相手のカードはまだ隠さない（または見せる）ルール通りに表示
-        renderHand(); 
-        updateSlots(); // クリックイベントを有効化
-        
-        guideEl.textContent = "運命の最後の一枚！クリックして勝負！";
-        guideEl.style.color = "#ff4757";
+        updateTableSlots(); // クリック可能にする
+        guideEl.textContent = "最後の一戦！カードをクリックして勝負！";
         return;
     }
 
-    // 通常ターン（2枚選択）
     phase = 'SELECT_TWO';
     guideEl.textContent = "手札からカードを2枚選んでください";
-    guideEl.style.color = "#f1c40f";
     btnEl.classList.remove('hidden');
     btnEl.disabled = true;
-    
     renderHand();
 }
 
-function clearSlot(id) {
-    const slot = document.getElementById(id);
-    slot.innerHTML = '';
-    slot.style.opacity = '1';
-    slot.classList.remove('final-p-choice', 'final-c-choice', 'clickable-slot');
-    slot.onclick = null;
+function resetSlot(id) {
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    el.style.opacity = '1';
+    el.classList.remove('final-p-choice', 'final-c-choice', 'clickable-slot');
+    el.onclick = null;
 }
 
-// // 手札の描画
+// // 手札を画面に描画 // //
 function renderHand() {
     handEl.innerHTML = '';
     pHand.sort((a, b) => a - b).forEach(val => {
@@ -85,8 +78,8 @@ function renderHand() {
             card.onclick = () => {
                 if (phase === 'SELECT_TWO' && pTable.length < 2) {
                     pTable.push(val);
-                    pTable.sort((a, b) => a - b);
-                    updateSlots();
+                    pTable.sort((a, b) => a - b); // 場に出す時もソート
+                    updateTableSlots();
                     renderHand();
                     if (pTable.length === 2) btnEl.disabled = false;
                 }
@@ -96,160 +89,167 @@ function renderHand() {
     });
 }
 
-// // スロットの表示更新
-function updateSlots() {
+// // 場（スロット）の更新 // //
+function updateTableSlots() {
     for(let i=0; i<2; i++) {
         const slot = document.getElementById(`player-slot-${i}`);
-        // 1枚のみの時は2つ目のスロットは触らせない
-        if (pTable.length === 1 && phase === 'FINAL_CHOICE' && i === 1) {
-            slot.classList.remove('clickable-slot');
-            continue;
-        }
-
         if (pTable[i] !== undefined) {
-            slot.innerHTML = ''; // 再描画
+            slot.innerHTML = '';
             slot.appendChild(createCardDOM(pTable[i]));
             slot.classList.add('clickable-slot');
-            
             slot.onclick = () => {
-                if (phase === 'SELECT_TWO') {
-                    deselectFromSlot(i);
-                } else if (phase === 'FINAL_CHOICE') {
-                    finalChoose(i);
-                }
+                if (phase === 'SELECT_TWO') deselectCard(i);
+                else if (phase === 'FINAL_CHOICE') finalBattle(i);
             };
         } else {
             slot.innerHTML = '';
             slot.classList.remove('clickable-slot');
-            slot.onclick = null;
         }
     }
 }
 
-function deselectFromSlot(index) {
+function deselectCard(index) {
     pTable.splice(index, 1);
     btnEl.disabled = true;
-    updateSlots();
+    updateTableSlots();
     renderHand();
 }
 
-function createCardDOM(val) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.textContent = val;
-    if (val > 0) card.classList.add('positive');
-    else if (val < 0) card.classList.add('negative');
-    else card.classList.add('zero');
-    return card;
-}
-
-// // 2枚提示（CPU）
+// // CPUが2枚提示 // //
 function cpuReveal() {
     phase = 'FINAL_CHOICE';
     btnEl.classList.add('hidden');
 
-    cTable = [];
-    let tempCHand = [...cHand];
+    // // CPUの思考：ランダムに2枚選択
+    let temp = [...cHand];
     while(cTable.length < 2) {
-        const idx = Math.floor(Math.random() * tempCHand.length);
-        cTable.push(tempCHand.splice(idx, 1)[0]);
+        let idx = Math.floor(Math.random() * temp.length);
+        cTable.push(temp.splice(idx, 1)[0]);
     }
     cTable.sort((a, b) => a - b);
 
     for(let i=0; i<2; i++) {
-        const cpuSlot = document.getElementById(`cpu-slot-${i}`);
-        cpuSlot.innerHTML = '';
-        cpuSlot.appendChild(createCardDOM(cTable[i]));
+        document.getElementById(`cpu-slot-${i}`).appendChild(createCardDOM(cTable[i]));
     }
 
-    guideEl.textContent = "どちらか1枚をクリックして勝負！";
-    guideEl.style.color = "#e67e22";
-    updateSlots();
+    guideEl.textContent = "どちらか1枚を選んでください";
+    updateTableSlots();
 }
 
-// // 最後の1枚を選択
-function finalChoose(playerChoiceIdx) {
-    if (phase !== 'FINAL_CHOICE') return;
+// // 最後の1枚を選んで決着 // //
+function finalBattle(pIdx) {
     phase = 'RESULT';
-
-    const pFinalCard = pTable[playerChoiceIdx];
+    const pCard = pTable[pIdx];
     
-    // CPUの選択
-    const cpuChoiceIdx = (cTable.length === 1) ? 0 : Math.floor(Math.random() * 2);
-    const cFinalCard = cTable[cpuChoiceIdx];
+    // CPUも1枚選ぶ
+    const cIdx = (cTable.length === 1) ? 0 : Math.floor(Math.random() * 2);
+    const cCard = cTable[cIdx];
 
-    // 演出：選ばれなかった方をさらに透明にする
+    // 演出：選ばれなかった方を消す
     if (pTable.length > 1) {
-        document.getElementById(`player-slot-${1-playerChoiceIdx}`).style.opacity = '0.05';
-        document.getElementById(`cpu-slot-${1-cpuChoiceIdx}`).style.opacity = '0.05';
+        document.getElementById(`player-slot-${1-pIdx}`).style.opacity = '0.1';
+        document.getElementById(`cpu-slot-${1-cIdx}`).style.opacity = '0.1';
     }
     
-    // アニメーション発動
-    document.getElementById(`player-slot-${playerChoiceIdx}`).classList.add('final-p-choice');
-    document.getElementById(`cpu-slot-${cpuChoiceIdx}`).classList.add('final-c-choice');
+    document.getElementById(`player-slot-${pIdx}`).classList.add('final-p-choice');
+    document.getElementById(`cpu-slot-${cIdx}`).classList.add('final-c-choice');
 
     setTimeout(() => {
-        resolveBattle(pFinalCard, cFinalCard);
-    }, 1000);
+        const result = judge(pCard, cCard);
+        const sum = pCard + cCard;
+        showOverlay(result, sum);
+        
+        // ログ更新
+        const logMsg = `あなた:${pCard} vs CPU:${cCard} (合計:${sum}) → ${result === 'player' ? '勝ち' : result === 'cpu' ? '負け' : '引分'}`;
+        document.getElementById('log').innerHTML = `<div>${logMsg}</div>` + document.getElementById('log').innerHTML;
+
+        // データ更新
+        pHand.splice(pHand.indexOf(pCard), 1);
+        cHand.splice(cHand.indexOf(cCard), 1);
+        if (result === 'player') pScore += sum;
+        else if (result === 'cpu') cScore += sum;
+        updateScoreDisplay();
+
+        setTimeout(() => {
+            overlayEl.classList.add('hidden');
+            if (pHand.length === 0) showGameOver();
+            else startNewTurn();
+        }, 1500);
+    }, 800);
 }
 
-// // 判定
+// // 勝敗判定：特殊ルールを最優先 // //
 function judge(p, c) {
     if (p === c) return "draw";
+    // 特殊ルール
+    if (p === 1 && c === 5) return "player";
+    if (c === 1 && p === 5) return "cpu";
+    if (p === -5 && c === -1) return "player";
+    if (c === -5 && p === -1) return "cpu";
+    // 通常
     return p > c ? "player" : "cpu";
 }
 
-function resolveBattle(pCard, cCard) {
-    const result = judge(pCard, cCard);
-    const sum = pCard + cCard;
-    let turnMsg = `あなた:${pCard} vs CPU:${cCard} (合計:${sum}) → `;
-    let overlayMsg = "";
-    let overlayColor = "";
-
-    if (result === "player") {
-        pScore += sum;
-        turnMsg += "勝利";
-        overlayMsg = `WIN!<br>+${sum}`;
-        overlayColor = "#2ecc71";
-    } else if (result === "cpu") {
-        cScore += sum;
-        turnMsg += "敗北";
-        overlayMsg = `LOSE<br>CPU +${sum}`;
-        overlayColor = "#e74c3c";
-    } else {
-        turnMsg += "引分";
-        overlayMsg = "DRAW";
-        overlayColor = "#95a5a6";
-    }
-
-    resultTextEl.innerHTML = overlayMsg;
-    resultTextEl.style.color = overlayColor;
-    overlayEl.classList.remove('hidden');
-
-    updateScore();
-    const log = document.getElementById('log');
-    log.innerHTML = `<div>${turnMsg}</div>` + log.innerHTML;
-
-    pHand.splice(pHand.indexOf(pCard), 1);
-    cHand.splice(cHand.indexOf(cCard), 1);
-
-    setTimeout(() => {
-        overlayEl.classList.remove('hidden'); // 一旦消すアニメーション待ちならここを調整
-        overlayEl.classList.add('hidden');
-        if (pHand.length === 0) gameOver();
-        else startNewTurn();
-    }, 1500);
+// // 演出とユーティリティ // //
+function createCardDOM(val) {
+    const d = document.createElement('div');
+    d.className = 'card';
+    d.textContent = val;
+    if (val > 0) d.classList.add('positive');
+    else if (val < 0) d.classList.add('negative');
+    else d.classList.add('zero');
+    return d;
 }
 
-function updateScore() {
+function showOverlay(res, sum) {
+    overlayEl.classList.remove('hidden');
+    if (res === 'player') {
+        resultTextEl.innerHTML = `WIN!<br>+${sum}`;
+        resultTextEl.style.color = "#2ecc71";
+    } else if (res === 'cpu') {
+        resultTextEl.innerHTML = `LOSE<br>CPU +${sum}`;
+        resultTextEl.style.color = "#e74c3c";
+    } else {
+        resultTextEl.innerHTML = `DRAW`;
+        resultTextEl.style.color = "#95a5a6";
+    }
+}
+
+function updateScoreDisplay() {
     document.getElementById('player-score').textContent = pScore;
     document.getElementById('cpu-score').textContent = cScore;
 }
 
-function gameOver() {
-    guideEl.textContent = "すべての戦いが終了しました";
-    const finalMsg = pScore > cScore ? "あなたの総合勝利！" : (pScore < cScore ? "CPUの総合勝利..." : "引き分け！");
-    document.getElementById('log').innerHTML = `<h2 style="background:linear-gradient(to right, #8e44ad, #c0392b); color:white; padding:10px; border-radius:5px;">${finalMsg}</h2>` + document.getElementById('log').innerHTML;
+// // ゲーム終了時の処理をリザルト画面遷移に書き換え
+function showGameOver() {
+    // // ゲーム画面を隠してリザルト画面を表示
+    document.getElementById('game-container').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+
+    // // スコアを反映
+    document.getElementById('final-player-score').textContent = pScore;
+    document.getElementById('final-cpu-score').textContent = cpuScore; // スコア変数名に注意（pScore, cScoreなど）
+
+    // // 勝敗に応じたコメントを表示
+    const commentEl = document.getElementById('final-comment');
+    if (pScore > cScore) {
+        commentEl.textContent = "YOU WIN!";
+        commentEl.style.color = "#2ecc71";
+    } else if (pScore < cScore) {
+        commentEl.textContent = "YOU LOSE...";
+        commentEl.style.color = "#e74c3c";
+    } else {
+        commentEl.textContent = "DRAW";
+        commentEl.style.color = "#95a5a6";
+    }
 }
 
-initGame();
+// // タイトルへ戻る処理
+function backToTitle() {
+    // // リザルトを隠してタイトルを表示
+    document.getElementById('result-screen').classList.add('hidden');
+    document.getElementById('title-screen').classList.remove('hidden');
+    
+    // // ログや表示のリセット（必要に応じて）
+    document.getElementById('log').innerHTML = '';
+}

@@ -1,20 +1,38 @@
+/* // 全体のレイアウト設定 */
 body {
     background-color: #1a1a1a;
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     display: flex;
     justify-content: center;
     margin: 0;
     min-height: 100vh;
 }
 
-#game-container {
+#title-screen, #game-container {
     text-align: center;
     width: 100%;
     max-width: 800px;
     padding: 20px;
 }
 
+/* // タイトル画面専用のデザイン */
+#title-screen h1 {
+    font-size: 3.5rem;
+    color: #e67e22;
+    margin-bottom: 20px;
+}
+
+.rule-box {
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: left;
+    margin: 30px auto;
+    border: 2px solid #34495e;
+}
+
+/* // スコアボード */
 .score-board {
     display: flex;
     justify-content: space-around;
@@ -22,15 +40,10 @@ body {
     background: #333;
     padding: 10px;
     border-radius: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
-.hand {
-    margin-top: 20px;
-    min-height: 100px;
-}
-
-/* カードの基本デザイン */
+/* // カードのデザイン */
 .card {
     display: inline-block;
     width: 60px;
@@ -47,110 +60,144 @@ body {
     transition: transform 0.2s, opacity 0.2s;
 }
 
-.card:hover { transform: translateY(-10px); }
+.card:hover { transform: translateY(-5px); }
 .card.selected { opacity: 0.2; pointer-events: none; }
 
-/* プラス/マイナス/0の色分け */
+/* // カードの色塗り分け */
 .card.positive { background-color: #d4edda; color: #155724; }
 .card.negative { background-color: #f8d7da; color: #721c24; }
 .card.zero { background-color: #e2e3e5; color: #383d41; }
 
-/* バトルフィールド */
+/* // バトルフィールドのスロット */
 .slots-container {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 15px;
 }
 
 .card-slot {
     width: 70px;
-    height: 105px;
-    border: 3px dashed #555;
+    height: 100px;
+    border: 2px dashed #555;
     border-radius: 8px;
-    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* クリックして選ぶスロットの演出 */
 .clickable-slot {
     cursor: pointer;
     border-color: #e67e22;
-}
-.clickable-slot:hover {
-    background-color: rgba(230, 126, 34, 0.2);
-    transform: scale(1.05);
+    background: rgba(230, 126, 34, 0.1);
 }
 
 .vs-divider {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #e74c3c;
     margin: 10px 0;
 }
 
-#guide-text {
-    font-size: 1.2rem;
-    color: #f1c40f;
-    margin: 15px 0;
-    font-weight: bold;
-}
-
-#log {
-    margin-top: 20px;
-    height: 120px;
-    overflow-y: auto;
-    background: rgba(0,0,0,0.5);
-    padding: 10px;
-    border-radius: 5px;
-    text-align: left;
-    font-size: 0.9rem;
-}
+/* // 共通パーツ */
+.hidden { display: none !important; }
 
 button {
-    padding: 10px 30px;
+    padding: 15px 40px;
     font-size: 1.2rem;
     background: #e67e22;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
 }
-button:disabled { background: #555; cursor: not-allowed; }
 
-/* 演出用クラス */
-.hidden { display: none !important; }
+button:disabled { background: #555; }
 
-/* 最後の1枚に選ばれた時のアニメーション */
-.final-p-choice {
-    animation: pMove 0.5s forwards;
-    z-index: 10;
-}
-.final-c-choice {
-    animation: cMove 0.5s forwards;
-    z-index: 10;
+#log {
+    margin-top: 15px;
+    height: 100px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    font-size: 0.85rem;
+    text-align: left;
 }
 
-@keyframes pMove {
-    to { transform: translateY(-100px) scale(1.2); }
-}
-@keyframes cMove {
-    to { transform: translateY(100px) scale(1.2); }
-}
+/* // アニメーション：カードが中央でぶつかる */
+.final-p-choice { animation: pMove 0.6s forwards; z-index: 10; }
+.final-c-choice { animation: cMove 0.6s forwards; z-index: 10; }
+@keyframes pMove { to { transform: translateY(-80px) scale(1.1); } }
+@keyframes cMove { to { transform: translateY(80px) scale(1.1); } }
 
-/* 結果オーバーレイ */
+/* // 結果オーバーレイ */
 #result-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 100;
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: bold;
-    animation: fadeIn 0.3s;
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* // リザルト画面のデザイン */
+#result-screen {
+    text-align: center;
+    padding: 50px 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+#result-screen h1 {
+    font-size: 3rem;
+    color: #f1c40f;
+    text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+}
+
+.final-score-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    background: #333;
+    padding: 30px;
+    border-radius: 20px;
+    margin: 30px 0;
+    border: 2px solid #555;
+}
+
+.score-item .label {
+    display: block;
+    font-size: 1rem;
+    color: #aaa;
+}
+
+.score-item .value {
+    font-size: 4rem;
+    font-weight: bold;
+}
+
+.vs-text {
+    font-size: 2rem;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+#final-comment {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+}
+
+.back-to-title-btn {
+    background: #2c3e50;
+    border: 2px solid #ecf0f1;
+    transition: 0.3s;
+}
+
+.back-to-title-btn:hover {
+    background: #ecf0f1;
+    color: #2c3e50;
+    transform: scale(1.05);
+}

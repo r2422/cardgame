@@ -172,7 +172,7 @@ function finalBattle(pIdx) {
 
         setTimeout(() => {
             overlayEl.classList.add('hidden');
-            if (pHand.length === 0) showGameOver();
+            if (pHand.length === 0) showResult();
             else startNewTurn();
         }, 1500);
     }, 800);
@@ -220,27 +220,30 @@ function updateScoreDisplay() {
     document.getElementById('cpu-score').textContent = cScore;
 }
 
-// // ゲーム終了時の処理をリザルト画面遷移に書き換え
-function showGameOver() {
-    // // ゲーム画面を隠してリザルト画面を表示
+// // 3. リザルト画面を表示する関数
+function showResult() {
+    // // ゲーム画面を隠し、リザルト画面を表示する
     document.getElementById('game-container').classList.add('hidden');
     document.getElementById('result-screen').classList.remove('hidden');
 
-    // // スコアを反映
+    // // スコアをリザルト画面の各要素に反映させる
     document.getElementById('final-player-score').textContent = pScore;
-    document.getElementById('final-cpu-score').textContent = cpuScore; // スコア変数名に注意（pScore, cScoreなど）
+    // // 【修正点】cpuScoreではなく、定義済みの cScore を使用します
+    document.getElementById('final-cpu-score').textContent = cScore; 
 
-    // // 勝敗に応じたコメントを表示
-    const commentEl = document.getElementById('final-comment');
-    if (pScore > cScore) {
-        commentEl.textContent = "YOU WIN!";
-        commentEl.style.color = "#2ecc71";
-    } else if (pScore < cScore) {
-        commentEl.textContent = "YOU LOSE...";
-        commentEl.style.color = "#e74c3c";
-    } else {
-        commentEl.textContent = "DRAW";
-        commentEl.style.color = "#95a5a6";
+    // // 勝敗に応じたメッセージと色の設定
+    const comment = document.getElementById('final-comment');
+    if (pScore > cScore) { 
+        comment.textContent = "YOU WIN!"; 
+        comment.style.color = "#2ecc71"; // 勝利時は緑色
+    }
+    else if (pScore < cScore) { 
+        comment.textContent = "YOU LOSE..."; 
+        comment.style.color = "#e74c3c"; // 敗北時は赤色
+    }
+    else { 
+        comment.textContent = "DRAW"; 
+        comment.style.color = "#95a5a6"; // 引き分けは灰色
     }
 }
 

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Sum: 2-Choice Duel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="result-overlay" class="hidden">
+        <div id="result-text"></div>
+    </div>
+
+    <div id="game-container">
+        <h1>Zero Sum: 2-Choice Duel</h1>
+        
+        <div class="score-board">
+            <p>Player: <span id="player-score">0</span></p>
+            <p>CPU: <span id="cpu-score">0</span></p>
+        </div>
+
+        <div class="battle-field">
+            <div id="cpu-selection" class="selection-area">
+                <h3>CPUの提示</h3>
+                <div class="slots-container">
+                    <div class="card-slot enemy-slot" id="cpu-slot-0"></div>
+                    <div class="card-slot enemy-slot" id="cpu-slot-1"></div>
+                </div>
+            </div>
+            
+            <div class="vs-divider">VS</div>
+
+            <div id="player-selection" class="selection-area">
+                <h3>あなたの提示 (2枚選択)</h3>
+                <div class="slots-container">
+                    <div class="card-slot player-slot clickable-slot" id="player-slot-0" onclick="finalChoose(0)"></div>
+                    <div class="card-slot player-slot clickable-slot" id="player-slot-1" onclick="finalChoose(1)"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="guide-text">手札からカードを2枚選んでください</div>
+
+        <div id="player-hand" class="hand"></div>
+
+        <button id="battle-btn" disabled onclick="cpuReveal()">2枚を提示する</button>
+
+        <div id="log"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
